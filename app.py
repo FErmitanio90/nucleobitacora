@@ -21,18 +21,20 @@ app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "supersecretkey")
 db.init_app(app)
 jwt.init_app(app)
 
+# ✅ CREAR TABLAS EN RENDER (solo la primera vez)
+with app.app_context():
+    from models import User, Dashboard
+    db.create_all()
+
 # Importar blueprints DESPUÉS de inicializar db y jwt
 from login import login_bp
 from dashboard import dashboard_bp
 from users import users_bp
 
-# ✅ RUTAS CORRECTAS Y LIMPIAS
+# Rutas
 app.register_blueprint(login_bp, url_prefix="/login")
 app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
 app.register_blueprint(users_bp, url_prefix="/users")
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    port = int(os.environ.get("PORT", 5050))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5050)))
