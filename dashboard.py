@@ -5,8 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from extensions import db
 from models import Dashboard
 
-# 👇 Agregado strict_slashes=False
-dashboard_bp = Blueprint("dashboard_bp", __name__, strict_slashes=False)
+dashboard_bp = Blueprint("dashboard_bp", __name__)
 
 # GET /dashboard
 @dashboard_bp.route("/", methods=["GET"])
