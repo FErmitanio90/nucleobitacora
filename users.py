@@ -3,8 +3,8 @@ from flask import Blueprint, request, jsonify
 from extensions import db
 from models import User
 
-# 👇 Agregado strict_slashes=False para evitar redirecciones 302
-users_bp = Blueprint("users_bp", __name__, strict_slashes=False)
+# ❌ QUITAR strict_slashes, rompe en Render
+users_bp = Blueprint("users_bp", __name__)
 
 # POST /users
 @users_bp.route("/", methods=["POST"])

@@ -27,9 +27,9 @@ from dashboard import dashboard_bp
 from users import users_bp
 
 # ✅ RUTAS CORRECTAS Y LIMPIAS
-app.register_blueprint(login_bp, url_prefix="/")
+app.register_blueprint(login_bp, url_prefix="/login")
 app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
-app.register_blueprint(users_bp, url_prefix="/users")   # ✔ ruta correcta para backend y frontend
+app.register_blueprint(users_bp, url_prefix="/users")
 
 if __name__ == "__main__":
     with app.app_context():
