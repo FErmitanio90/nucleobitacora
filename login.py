@@ -11,21 +11,21 @@ def login():
     data = request.get_json()
 
     if not data:
-        return jsonify({"error": "Debe enviar JSON"}), 400
+        return jsonify({"success": False, "error": "Debe enviar JSON"}), 400
 
     username = data.get("username")
     password = data.get("password")
 
     if not username or not password:
-        return jsonify({"error": "Faltan campos username y password"}), 400
+        return jsonify({"success": False, "error": "Faltan campos username y password"}), 400
 
     user = User.query.filter_by(username=username).first()
 
     if not user:
-        return jsonify({"error": "Usuario no encontrado"}), 404
+        return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
 
     if user.password != password:  
-        return jsonify({"error": "Contraseña incorrecta"}), 401
+        return jsonify({"success": False, "error": "Contraseña incorrecta"}), 401
 
     claims = {
         "username": user.username,
@@ -40,6 +40,7 @@ def login():
     )
 
     return jsonify({
+        "success": True,   # ✅ NECESARIO PARA EL FRONT
         "msg": "Login exitoso",
         "access_token": token,
         "usuario": {

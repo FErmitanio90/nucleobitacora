@@ -8,8 +8,9 @@ dashboard_bp = Blueprint("dashboard_bp", __name__)
 
 # -----------------------------------------
 # ✅ Obtener dashboard del usuario
+# Ruta final: GET /dashboard
 # -----------------------------------------
-@dashboard_bp.route("/dashboard", methods=["GET"])
+@dashboard_bp.route("", methods=["GET"])
 @jwt_required()
 def get_dashboard():
     iduser = get_jwt_identity()
@@ -36,8 +37,9 @@ def get_dashboard():
 
 # -----------------------------------------
 # ✅ Crear sesión
+# Ruta final: POST /dashboard
 # -----------------------------------------
-@dashboard_bp.route("/dashboard", methods=["POST"])
+@dashboard_bp.route("", methods=["POST"])
 @jwt_required()
 def create_dashboard():
     iduser = get_jwt_identity()
@@ -70,8 +72,9 @@ def create_dashboard():
 
 # -----------------------------------------
 # ✅ Actualizar sesión
+# Ruta final: PUT /dashboard/<idsesion>
 # -----------------------------------------
-@dashboard_bp.route("/dashboard/<int:idsesion>", methods=["PUT"])
+@dashboard_bp.route("/<int:idsesion>", methods=["PUT"])
 @jwt_required()
 def update_dashboard(idsesion):
     iduser = get_jwt_identity()
@@ -102,3 +105,23 @@ def update_dashboard(idsesion):
         db.session.rollback()
         return jsonify({"msg": "Error al actualizar sesión", "error": str(e)}), 500
 
+# Delete
+@dashboard_bp.route("/<int:idsesion>", methods=["DELETE"])
+@jwt_required()
+def delete_dashboard(idsesion):
+    iduser = get_jwt_identity()
+
+    try:
+        sesion = Dashboard.query.filter_by(idsesion=idsesion, iduser=iduser).first()
+
+        if not sesion:
+            return jsonify({"msg": "Sesión no encontrada o sin permiso"}), 404
+
+        db.session.delete(sesion)
+        db.session.commit()
+
+        return jsonify({"msg": "Sesión eliminada exitosamente"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Error al eliminar sesión", "error": str(e)}), 500

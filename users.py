@@ -4,7 +4,8 @@ from models import User
 
 users_bp = Blueprint("users_bp", __name__)
 
-@users_bp.route("/users", methods=["POST"])
+# ✅ Ruta corregida: ahora el endpoint final será /users
+@users_bp.route("/", methods=["POST"])
 def create_user():
     data = request.get_json()
 
@@ -44,4 +45,21 @@ def create_user():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Error al crear usuario: {str(e)}"}), 500
+@users_bp.route("/", methods=["GET"])
+def get_users():
+    try:
+        users = User.query.all()
+        resultado = [
+            {
+                "iduser": u.iduser,
+                "nombre": u.nombre,
+                "apellido": u.apellido,
+                "username": u.username
+            }
+            for u in users
+        ]
+        return jsonify(resultado), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error al obtener usuarios: {str(e)}"}), 500
 
