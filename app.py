@@ -1,6 +1,7 @@
+# app.py
 from flask import Flask
 from flask_cors import CORS
-from extensions import db, jwt  # ✅ importar desde extensions
+from extensions import db, jwt
 from dotenv import load_dotenv
 import os
 
@@ -25,11 +26,10 @@ from login import login_bp
 from dashboard import dashboard_bp
 from users import users_bp
 
-# ✅ CORRECCIÓN IMPORTANTE:
-# No duplicar rutas. El blueprint ya define "/dashboard" y "/users" internamente.
+# ✅ RUTAS CORRECTAS Y LIMPIAS
 app.register_blueprint(login_bp, url_prefix="/")
-app.register_blueprint(dashboard_bp, url_prefix="/")   # antes: /dashboard
-app.register_blueprint(users_bp, url_prefix="/")       # antes: /users
+app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
+app.register_blueprint(users_bp, url_prefix="/users")   # ✔ ruta correcta para backend y frontend
 
 if __name__ == "__main__":
     with app.app_context():

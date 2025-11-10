@@ -1,16 +1,15 @@
+# dashboard.py
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from extensions import db
 from models import Dashboard
 
-dashboard_bp = Blueprint("dashboard_bp", __name__)
+# 👇 Agregado strict_slashes=False
+dashboard_bp = Blueprint("dashboard_bp", __name__, strict_slashes=False)
 
-# -----------------------------------------
-# ✅ Obtener dashboard del usuario
-# Ruta final: GET /dashboard
-# -----------------------------------------
-@dashboard_bp.route("", methods=["GET"])
+# GET /dashboard
+@dashboard_bp.route("/", methods=["GET"])
 @jwt_required()
 def get_dashboard():
     iduser = get_jwt_identity()
@@ -35,11 +34,8 @@ def get_dashboard():
         return jsonify({"msg": "Error al obtener dashboard", "error": str(e)}), 500
 
 
-# -----------------------------------------
-# ✅ Crear sesión
-# Ruta final: POST /dashboard
-# -----------------------------------------
-@dashboard_bp.route("", methods=["POST"])
+# POST /dashboard
+@dashboard_bp.route("/", methods=["POST"])
 @jwt_required()
 def create_dashboard():
     iduser = get_jwt_identity()
@@ -70,10 +66,7 @@ def create_dashboard():
         return jsonify({"msg": "Error al crear sesión", "error": str(e)}), 500
 
 
-# -----------------------------------------
-# ✅ Actualizar sesión
-# Ruta final: PUT /dashboard/<idsesion>
-# -----------------------------------------
+# PUT /dashboard/<idsesion>
 @dashboard_bp.route("/<int:idsesion>", methods=["PUT"])
 @jwt_required()
 def update_dashboard(idsesion):
@@ -89,7 +82,6 @@ def update_dashboard(idsesion):
         if not sesion:
             return jsonify({"msg": "Sesión no encontrada o sin permiso"}), 404
 
-        # Actualizar campos recibidos
         for field in ["cronica", "numero_de_sesion", "resumen"]:
             if field in data:
                 setattr(sesion, field, data[field])
@@ -105,7 +97,8 @@ def update_dashboard(idsesion):
         db.session.rollback()
         return jsonify({"msg": "Error al actualizar sesión", "error": str(e)}), 500
 
-# Delete
+
+# DELETE
 @dashboard_bp.route("/<int:idsesion>", methods=["DELETE"])
 @jwt_required()
 def delete_dashboard(idsesion):
@@ -125,3 +118,4 @@ def delete_dashboard(idsesion):
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error al eliminar sesión", "error": str(e)}), 500
+

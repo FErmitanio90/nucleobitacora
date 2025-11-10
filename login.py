@@ -1,3 +1,4 @@
+# login.py
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
@@ -6,7 +7,7 @@ from models import User
 
 login_bp = Blueprint("login_bp", __name__)
 
-@login_bp.route("/login", methods=["POST"])
+@login_bp.route("/", methods=["POST"])
 def login():
     data = request.get_json()
 
