@@ -1,4 +1,4 @@
-# login.py
+# login.py backend
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
@@ -34,21 +34,19 @@ def login():
         "apellido": user.apellido
     }
 
+    # ✅ PARCHE IMPORTANTE: identity como STRING
     token = create_access_token(
-        identity=user.iduser,
+        identity=str(user.iduser),
         additional_claims=claims,
         expires_delta=timedelta(hours=1)
     )
 
     return jsonify({
-        "success": True,   # ✅ NECESARIO PARA EL FRONT
+        "success": True,
         "msg": "Login exitoso",
         "access_token": token,
         "usuario": {
             "iduser": user.iduser,
-            "nombre": user.nombre,
-            "apellido": user.apellido,
-            "username": user.username
+            "nombre": user.nombre
         }
     }), 200
-

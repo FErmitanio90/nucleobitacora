@@ -1,4 +1,4 @@
-# dashboard.py
+# dashboard.py Backend
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -11,7 +11,7 @@ dashboard_bp = Blueprint("dashboard_bp", __name__)
 @dashboard_bp.route("/", methods=["GET"])
 @jwt_required()
 def get_dashboard():
-    iduser = get_jwt_identity()
+    iduser = int(get_jwt_identity())  # ✅ PARCHE IMPORTANTÍSIMO
 
     try:
         sesiones = Dashboard.query.filter_by(iduser=iduser).order_by(Dashboard.fecha.desc()).all()
@@ -37,7 +37,7 @@ def get_dashboard():
 @dashboard_bp.route("/", methods=["POST"])
 @jwt_required()
 def create_dashboard():
-    iduser = get_jwt_identity()
+    iduser = int(get_jwt_identity())  # ✅ convertir a int SIEMPRE
     data = request.get_json()
 
     if not data:
@@ -69,7 +69,7 @@ def create_dashboard():
 @dashboard_bp.route("/<int:idsesion>", methods=["PUT"])
 @jwt_required()
 def update_dashboard(idsesion):
-    iduser = get_jwt_identity()
+    iduser = int(get_jwt_identity())  # ✅ PARCHE
     data = request.get_json()
 
     if not data:
@@ -101,7 +101,7 @@ def update_dashboard(idsesion):
 @dashboard_bp.route("/<int:idsesion>", methods=["DELETE"])
 @jwt_required()
 def delete_dashboard(idsesion):
-    iduser = get_jwt_identity()
+    iduser = int(get_jwt_identity())  # ✅ PARCHE
 
     try:
         sesion = Dashboard.query.filter_by(idsesion=idsesion, iduser=iduser).first()
