@@ -1,1 +1,11 @@
 pip install python-dotenv
+
+Consultar tablas:
+
+contenedor temporal: docker run -it --rm postgres psql "postgresql://jcrudo90:Lz7DThJFBCUpjFFPWvGjD1BOGtDtIAql@dpg-d494fn3uibrs739levjg-a.oregon-postgres.render.com/basebitacora"
+
+ver tablas
+\dt
+
+users: SELECT * FROM users;
+dashboard: SELECT * FROM dashboard;
