@@ -36,5 +36,9 @@ app.register_blueprint(login_bp, url_prefix="/login")
 app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
 app.register_blueprint(users_bp, url_prefix="/users")
 
+@app.route("/health")
+def health():
+    return {"status": "ok"}, 200
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5050)))

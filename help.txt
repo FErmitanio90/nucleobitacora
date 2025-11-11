@@ -8,4 +8,4 @@ ver tablas
 \dt
 
 users: SELECT * FROM users;
-dashboard: SELECT * FROM dashboard;
+dashboard: SELECT * FROM dashboard
