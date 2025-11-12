@@ -20,6 +20,7 @@ def get_dashboard():
             {
                 "idsesion": s.idsesion,
                 "cronica": s.cronica,
+                "juego": s.juego,
                 "numero_de_sesion": s.numero_de_sesion,
                 "fecha": s.fecha.strftime("%Y-%m-%d"),
                 "resumen": s.resumen
@@ -50,6 +51,7 @@ def create_dashboard():
         nueva = Dashboard(
             iduser=iduser,
             cronica=data.get("cronica"),
+            juego=data.get("juego"),
             numero_de_sesion=data.get("numero_de_sesion"),
             fecha=fecha,
             resumen=data.get("resumen")
@@ -81,7 +83,7 @@ def update_dashboard(idsesion):
         if not sesion:
             return jsonify({"msg": "Sesión no encontrada o sin permiso"}), 404
 
-        for field in ["cronica", "numero_de_sesion", "resumen"]:
+        for field in ["cronica","juego", "numero_de_sesion", "resumen"]:
             if field in data:
                 setattr(sesion, field, data[field])
 
