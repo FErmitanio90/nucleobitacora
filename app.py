@@ -1,9 +1,11 @@
-# app.py
 from flask import Flask
 from flask_cors import CORS
 from extensions import db, jwt
 from dotenv import load_dotenv
 import os
+
+# 🔹 NUEVO: Importar Flask-Migrate
+from flask_migrate import Migrate  
 
 load_dotenv()
 
@@ -21,9 +23,14 @@ app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "supersecretkey")
 db.init_app(app)
 jwt.init_app(app)
 
-# ✅ CREAR TABLAS EN RENDER (solo la primera vez)
+# 🔹 NUEVO: Inicializar Flask-Migrate
+migrate = Migrate(app, db)
+
+# ✅ Importar modelos antes de crear tablas o migrar
+from models import User, Dashboard
+
+# ✅ (opcional) Crear tablas en local si no existen — en Render podés dejarlo comentado luego de la primera migración
 with app.app_context():
-    from models import User, Dashboard
     db.create_all()
 
 # Importar blueprints DESPUÉS de inicializar db y jwt

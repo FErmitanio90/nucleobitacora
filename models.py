@@ -1,4 +1,5 @@
 # models.py
+from flask_migrate import Migrate
 from datetime import datetime
 from extensions import db  # ⚠️ Importa la instancia creada en app.py
 
