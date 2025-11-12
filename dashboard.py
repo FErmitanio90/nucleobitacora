@@ -117,4 +117,3 @@ def delete_dashboard(idsesion):
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error al eliminar sesión", "error": str(e)}), 500
-
