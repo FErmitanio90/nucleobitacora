@@ -6,6 +6,8 @@ from extensions import db
 from models import Dashboard
 from flask import send_file
 from reportlab.pdfgen import canvas
+
+
 from io import BytesIO
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
