@@ -4,6 +4,9 @@ from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from extensions import db
 from models import Dashboard
+from flask import send_file
+from reportlab.pdfgen import canvas
+from io import BytesIO
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
 
@@ -119,3 +122,60 @@ def delete_dashboard(idsesion):
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error al eliminar sesión", "error": str(e)}), 500
+    
+# GET /dashboard/<idsesion>/pdf
+
+@dashboard_bp.route("/<int:idsesion>/pdf", methods=["GET"])
+@jwt_required()
+def get_dashboard_pdf(idsesion):
+    iduser = int(get_jwt_identity())
+
+    try:
+        sesion = Dashboard.query.filter_by(idsesion=idsesion, iduser=iduser).first()
+
+        if not sesion:
+            return jsonify({"msg": "Sesión no encontrada o sin permiso"}), 404
+
+        buffer = BytesIO()
+        pdf = canvas.Canvas(buffer)
+
+        y = 800  # posición inicial
+        line_height = 16
+
+        def write_line(text):
+            nonlocal y
+            if y < 50:       # si llego al final de la página
+                pdf.showPage()
+                y = 800
+            pdf.drawString(40, y, text)
+            y -= line_height
+
+        write_line(f"Cronica: {sesion.cronica}")
+        write_line(f"Juego: {sesion.juego}")
+        write_line(f"Número de Sesión: {sesion.numero_de_sesion}")
+        write_line(f"Fecha: {sesion.fecha.strftime('%Y-%m-%d')}")
+        write_line("")  # espacio
+        write_line("Resumen:")
+        write_line("")
+
+        # Procesar texto largo línea por línea
+        resumen = sesion.resumen.split("\n")
+        for linea in resumen:
+            # cortar líneas demasiado largas en pedazos seguros
+            while len(linea) > 90:
+                write_line(linea[:90])
+                linea = linea[90:]
+            write_line(linea)
+
+        pdf.save()
+        buffer.seek(0)
+
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f"sesion_{idsesion}.pdf",
+            mimetype='application/pdf'
+        )
+
+    except Exception as e:
+        return jsonify({"msg": "Error al generar PDF", "error": str(e)}), 500
