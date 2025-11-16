@@ -7,7 +7,6 @@ from models import Dashboard
 from flask import send_file
 from reportlab.pdfgen import canvas
 
-
 from io import BytesIO
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
@@ -141,12 +140,12 @@ def get_dashboard_pdf(idsesion):
         buffer = BytesIO()
         pdf = canvas.Canvas(buffer)
 
-        y = 800  # posición inicial
+        y = 800
         line_height = 16
 
         def write_line(text):
             nonlocal y
-            if y < 50:       # si llego al final de la página
+            if y < 50:
                 pdf.showPage()
                 y = 800
             pdf.drawString(40, y, text)
@@ -156,14 +155,12 @@ def get_dashboard_pdf(idsesion):
         write_line(f"Juego: {sesion.juego}")
         write_line(f"Número de Sesión: {sesion.numero_de_sesion}")
         write_line(f"Fecha: {sesion.fecha.strftime('%Y-%m-%d')}")
-        write_line("")  # espacio
+        write_line("")
         write_line("Resumen:")
         write_line("")
 
-        # Procesar texto largo línea por línea
         resumen = sesion.resumen.split("\n")
         for linea in resumen:
-            # cortar líneas demasiado largas en pedazos seguros
             while len(linea) > 90:
                 write_line(linea[:90])
                 linea = linea[90:]
@@ -172,12 +169,18 @@ def get_dashboard_pdf(idsesion):
         pdf.save()
         buffer.seek(0)
 
-        return send_file(
+        # FIX PARA RENDER
+        from flask import make_response
+        response = make_response(send_file(
             buffer,
             as_attachment=True,
             download_name=f"sesion_{idsesion}.pdf",
             mimetype='application/pdf'
-        )
+        ))
+        response.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
+
+        return response
 
     except Exception as e:
         return jsonify({"msg": "Error al generar PDF", "error": str(e)}), 500
+
