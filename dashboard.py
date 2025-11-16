@@ -124,10 +124,13 @@ def delete_dashboard(idsesion):
         db.session.rollback()
         return jsonify({"msg": "Error al eliminar sesión", "error": str(e)}), 500
     
-# GET /dashboard/<idsesion>/txt
-@dashboard_bp.route("/<int:idsesion>/txt", methods=["GET"])
+# GET /dashboard/<idsesion>/pdf
+@dashboard_bp.route("/<int:idsesion>/pdf", methods=["GET"])
 @jwt_required()
-def get_dashboard_txt(idsesion):
+def get_dashboard_pdf(idsesion):
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+
     iduser = int(get_jwt_identity())
 
     try:
@@ -137,34 +140,57 @@ def get_dashboard_txt(idsesion):
         if not sesion:
             return jsonify({"msg": "Sesión no encontrada o sin permiso"}), 404
 
-        # Generar contenido TXT
-        contenido = []
-        contenido.append(f"Cronica: {sesion.cronica}")
-        contenido.append(f"Juego: {sesion.juego}")
-        contenido.append(f"Número de Sesión: {sesion.numero_de_sesion}")
-        contenido.append(f"Fecha: {sesion.fecha.strftime('%Y-%m-%d')}")
-        contenido.append("")
-        contenido.append("Resumen:")
-        contenido.append("")
-        contenido.append(sesion.resumen)
+        # Crear PDF en memoria
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer, pagesize=letter)
 
-        txt_data = "\n".join(contenido)
+        y = 750  # posición inicial
 
-        # Convertir a bytes
-        buffer = BytesIO(txt_data.encode("utf-8"))
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(50, y, "Bitácora de Sesión")
+        y -= 30
+
+        c.setFont("Helvetica", 12)
+        c.drawString(50, y, f"Cronica: {sesion.cronica}")
+        y -= 20
+        c.drawString(50, y, f"Juego: {sesion.juego}")
+        y -= 20
+        c.drawString(50, y, f"Número de Sesión: {sesion.numero_de_sesion}")
+        y -= 20
+        c.drawString(50, y, f"Fecha: {sesion.fecha.strftime('%Y-%m-%d')}")
+        y -= 40
+
+        # Resumen multilínea
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(50, y, "Resumen:")
+        y -= 25
+
+        c.setFont("Helvetica", 11)
+
+        for linea in sesion.resumen.split("\n"):
+            if y < 50:  # salto de página
+                c.showPage()
+                y = 750
+                c.setFont("Helvetica", 11)
+
+            c.drawString(50, y, linea)
+            y -= 18
+
+        c.save()
+
         buffer.seek(0)
 
-        # Preparar respuesta (fix para Render)
+        # Enviar PDF
         response = make_response(send_file(
             buffer,
             as_attachment=True,
-            download_name=f"sesion_{idsesion}.txt",
-            mimetype="text/plain"
+            download_name=f"sesion_{idsesion}.pdf",
+            mimetype="application/pdf"
         ))
         response.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
-
         return response
 
     except Exception as e:
-        return jsonify({"msg": "Error al generar TXT", "error": str(e)}), 500
+        return jsonify({"msg": "Error al generar PDF", "error": str(e)}), 500
+
 
