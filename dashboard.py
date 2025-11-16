@@ -128,59 +128,87 @@ def delete_dashboard(idsesion):
 @dashboard_bp.route("/<int:idsesion>/pdf", methods=["GET"])
 @jwt_required()
 def get_dashboard_pdf(idsesion):
-    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.pagesizes import A4
     from reportlab.pdfgen import canvas
+    from reportlab.lib.units import mm
 
     iduser = int(get_jwt_identity())
 
     try:
         # Buscar sesión
         sesion = Dashboard.query.filter_by(idsesion=idsesion, iduser=iduser).first()
-
         if not sesion:
             return jsonify({"msg": "Sesión no encontrada o sin permiso"}), 404
 
-        # Crear PDF en memoria
+        # --- CONFIG PDF ---
         buffer = BytesIO()
-        c = canvas.Canvas(buffer, pagesize=letter)
+        c = canvas.Canvas(buffer, pagesize=A4)
 
-        y = 750  # posición inicial
+        width, height = A4
+        margin = 20 * mm
+        y = height - margin
 
-        c.setFont("Helvetica-Bold", 14)
-        c.drawString(50, y, "Bitácora de Sesión")
-        y -= 30
+        # --- Encabezado ---
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(margin, y, "Bitácora de Sesión")
+        y -= 15
 
         c.setFont("Helvetica", 12)
-        c.drawString(50, y, f"Cronica: {sesion.cronica}")
-        y -= 20
-        c.drawString(50, y, f"Juego: {sesion.juego}")
-        y -= 20
-        c.drawString(50, y, f"Número de Sesión: {sesion.numero_de_sesion}")
-        y -= 20
-        c.drawString(50, y, f"Fecha: {sesion.fecha.strftime('%Y-%m-%d')}")
-        y -= 40
+        datos = [
+            f"Crónica: {sesion.cronica}",
+            f"Juego: {sesion.juego}",
+            f"Número de Sesión: {sesion.numero_de_sesion}",
+            f"Fecha: {sesion.fecha.strftime('%Y-%m-%d')}",
+        ]
 
-        # Resumen multilínea
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(50, y, "Resumen:")
+        for d in datos:
+            y -= 15
+            c.drawString(margin, y, d)
+
         y -= 25
+        c.setFont("Helvetica-Bold", 13)
+        c.drawString(margin, y, "Resumen:")
+        y -= 20
 
         c.setFont("Helvetica", 11)
 
-        for linea in sesion.resumen.split("\n"):
-            if y < 50:  # salto de página
+        # --- Word Wrapping automático ---
+        def draw_wrapped(text, x, y, max_width):
+            from reportlab.pdfbase.pdfmetrics import stringWidth
+
+            lines = []
+            for linea in text.split("\n"):
+                palabras = linea.split()
+                linea_actual = ""
+
+                for palabra in palabras:
+                    test = linea_actual + " " + palabra if linea_actual else palabra
+                    if stringWidth(test, "Helvetica", 11) < max_width:
+                        linea_actual = test
+                    else:
+                        lines.append(linea_actual)
+                        linea_actual = palabra
+
+                if linea_actual:
+                    lines.append(linea_actual)
+
+            return lines
+
+        max_width = width - (2 * margin)
+        lineas = draw_wrapped(sesion.resumen, margin, y, max_width)
+
+        for linea in lineas:
+            if y < margin:
                 c.showPage()
-                y = 750
+                y = height - margin
                 c.setFont("Helvetica", 11)
 
-            c.drawString(50, y, linea)
-            y -= 18
+            c.drawString(margin, y, linea)
+            y -= 14
 
         c.save()
-
         buffer.seek(0)
 
-        # Enviar PDF
         response = make_response(send_file(
             buffer,
             as_attachment=True,
@@ -192,5 +220,6 @@ def get_dashboard_pdf(idsesion):
 
     except Exception as e:
         return jsonify({"msg": "Error al generar PDF", "error": str(e)}), 500
+
 
 
