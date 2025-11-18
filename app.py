@@ -27,7 +27,7 @@ jwt.init_app(app)
 migrate = Migrate(app, db)
 
 # ✅ Importar modelos antes de crear tablas o migrar
-from models import User, Dashboard
+from models import User, Dashboard, Personaje
 
 # ✅ (opcional) Crear tablas en local si no existen — en Render podés dejarlo comentado luego de la primera migración
 with app.app_context():
@@ -37,11 +37,13 @@ with app.app_context():
 from login import login_bp
 from dashboard import dashboard_bp
 from users import users_bp
+from personajes import personajes_bp
 
 # Rutas
 app.register_blueprint(login_bp, url_prefix="/login")
 app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
 app.register_blueprint(users_bp, url_prefix="/users")
+app.register_blueprint(personajes_bp, url_prefix="/personajes")
 
 @app.route("/health")
 def health():
