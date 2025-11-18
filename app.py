@@ -7,6 +7,9 @@ import os
 # 🔹 NUEVO: Importar Flask-Migrate
 from flask_migrate import Migrate  
 
+
+migrate = Migrate(db)
+
 load_dotenv()
 
 app = Flask(__name__)
