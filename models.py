@@ -22,6 +22,8 @@ class Dashboard(db.Model):
     iduser = db.Column(db.Integer, db.ForeignKey("users.iduser"), nullable=False)
     cronica = db.Column(db.Text, nullable=True)
     juego = db.Column(db.Text, nullable=True)
+    director = db.Column(db.String(100), nullable=True)
+    jugadores = db.Column(db.Text, nullable=True)
     numero_de_sesion = db.Column(db.Integer, nullable=True)
     fecha = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     resumen = db.Column(db.Text, nullable=True)

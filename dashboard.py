@@ -25,6 +25,8 @@ def get_dashboard():
                 "idsesion": s.idsesion,
                 "cronica": s.cronica,
                 "juego": s.juego,
+                "director": s.director,
+                "jugadores": s.jugadores,
                 "numero_de_sesion": s.numero_de_sesion,
                 "fecha": s.fecha.strftime("%Y-%m-%d"),
                 "resumen": s.resumen
@@ -56,6 +58,8 @@ def create_dashboard():
             iduser=iduser,
             cronica=data.get("cronica"),
             juego=data.get("juego"),
+            director=data.get("director"),
+            jugadores=data.get("jugadores"),
             numero_de_sesion=data.get("numero_de_sesion"),
             fecha=fecha,
             resumen=data.get("resumen")
@@ -87,7 +91,7 @@ def update_dashboard(idsesion):
         if not sesion:
             return jsonify({"msg": "Sesión no encontrada o sin permiso"}), 404
 
-        for field in ["cronica","juego", "numero_de_sesion", "resumen"]:
+        for field in ["cronica","juego","director","jugadores", "numero_de_sesion", "resumen"]:
             if field in data:
                 setattr(sesion, field, data[field])
 
@@ -157,6 +161,8 @@ def get_dashboard_pdf(idsesion):
         datos = [
             f"Crónica: {sesion.cronica}",
             f"Juego: {sesion.juego}",
+            f"Director: {sesion.director}",
+            f"Jugadores: {sesion.jugadores}",
             f"Número de Sesión: {sesion.numero_de_sesion}",
             f"Fecha: {sesion.fecha.strftime('%Y-%m-%d')}",
         ]
