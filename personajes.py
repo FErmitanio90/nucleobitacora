@@ -1,3 +1,4 @@
+#personajes.py backend
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from extensions import db
@@ -23,6 +24,8 @@ def get_personajes():
         resultado = [
             {
                 "idpersonaje": p.idpersonaje,
+                "cronica": p.cronica,
+                "juego": p.juego,
                 "nombre": p.nombre,
                 "apellido": p.apellido,
                 "genero": p.genero,
@@ -58,6 +61,8 @@ def create_personaje():
     try:
         nuevo = Personaje(
             iduser=iduser,
+            cronica=data.get("cronica"),
+            juego=data.get("juego"),
             nombre=data.get("nombre"),
             apellido=data.get("apellido"),
             genero=data.get("genero"),
@@ -99,6 +104,7 @@ def update_personaje(idpersonaje):
             return jsonify({"msg": "Personaje no encontrado"}), 404
 
         for campo in [
+            "cronica", "juego",
             "nombre", "apellido", "genero", "edad", "ocupacion",
             "etnia", "descripcion", "historia", "inventario", "notas"
         ]:
@@ -165,6 +171,8 @@ def get_personaje_pdf(idpersonaje):
         write(f"{personaje.nombre} {personaje.apellido}", 30)
 
         pdf.setFont("Helvetica", 11)
+        write(f"Cronica: {personaje.cronica or 'N/A'}")
+        write(f"Juego: {personaje.juego or 'N/A'}")
         write(f"Género: {personaje.genero or 'N/A'}")
         write(f"Edad: {personaje.edad or 'N/A'}")
         write(f"Ocupación: {personaje.ocupacion or 'N/A'}")
@@ -207,4 +215,3 @@ def get_personaje_pdf(idpersonaje):
     except Exception as e:
         print("❌ Error generando PDF:", e)
         return jsonify({"msg": "Error generando PDF", "error": str(e)}), 500
-
