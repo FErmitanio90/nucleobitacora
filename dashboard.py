@@ -226,6 +226,3 @@ def get_dashboard_pdf(idsesion):
 
     except Exception as e:
         return jsonify({"msg": "Error al generar PDF", "error": str(e)}), 500
-
-
-

@@ -60,11 +60,10 @@ def get_personajes():
                 "notas": p.notas
             })
 
-        return json_ok(data=data)
+        return jsonify(data)  # <-- enviar directamente la lista
 
     except Exception as e:
-        return json_error("Error al obtener personajes", e, 500)
-
+        return jsonify({"error": f"Error al obtener personajes: {str(e)}"}), 500
 
 # ============================================================
 # POST /personajes
