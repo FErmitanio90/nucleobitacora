@@ -118,6 +118,39 @@ def update_personaje(idpersonaje):
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error al actualizar personaje", "error": str(e)}), 500
+    
+# =============================
+# GET /personajes/<id>
+# =============================
+@personajes_bp.route("/<int:idpersonaje>", methods=["GET"])
+@jwt_required()
+def get_personaje(idpersonaje):
+    iduser = int(get_jwt_identity())
+
+    try:
+        personaje = Personaje.query.filter_by(idpersonaje=idpersonaje, iduser=iduser).first()
+
+        if not personaje:
+            return jsonify({"msg": "Personaje no encontrado"}), 404
+
+        return jsonify({
+            "idpersonaje": personaje.idpersonaje,
+            "cronica": personaje.cronica,
+            "juego": personaje.juego,
+            "nombre": personaje.nombre,
+            "apellido": personaje.apellido,
+            "genero": personaje.genero,
+            "edad": personaje.edad,
+            "ocupacion": personaje.ocupacion,
+            "etnia": personaje.etnia,
+            "descripcion": personaje.descripcion,
+            "historia": personaje.historia,
+            "inventario": personaje.inventario,
+            "notas": personaje.notas
+        }), 200
+
+    except Exception as e:
+        return jsonify({"msg": "Error al obtener personaje", "error": str(e)}), 500
 
 
 # =============================

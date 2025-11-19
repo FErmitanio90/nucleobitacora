@@ -1,3 +1,4 @@
+#app.py backend
 from flask import Flask
 from flask_cors import CORS
 from extensions import db, jwt
@@ -31,10 +32,6 @@ migrate = Migrate(app, db)
 
 # ✅ Importar modelos antes de crear tablas o migrar
 from models import User, Dashboard, Personaje
-
-# ✅ (opcional) Crear tablas en local si no existen — en Render podés dejarlo comentado luego de la primera migración
-with app.app_context():
-    db.create_all()
 
 # Importar blueprints DESPUÉS de inicializar db y jwt
 from login import login_bp
