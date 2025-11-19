@@ -1,4 +1,5 @@
-#personajes.py backend
+# personajes.py (BACKEND)
+
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from extensions import db
@@ -6,13 +7,33 @@ from models import Personaje
 from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-import json
 
 personajes_bp = Blueprint("personajes_bp", __name__)
 
-# =============================
+
+# ============================================================
+# Utilidades
+# ============================================================
+
+def json_ok(msg=None, data=None, code=200):
+    payload = {}
+    if msg: payload["msg"] = msg
+    if data is not None: payload["data"] = data
+    return jsonify(payload), code
+
+
+def json_error(msg="Error", error="", code=400):
+    return jsonify({"msg": msg, "error": str(error)}), code
+
+
+def safe_inventario(value):
+    """Garantiza que inventario siempre sea lista (igual que dashboard)."""
+    return value if isinstance(value, list) else []
+
+
+# ============================================================
 # GET /personajes
-# =============================
+# ============================================================
 @personajes_bp.route("/", methods=["GET"])
 @jwt_required()
 def get_personajes():
@@ -21,12 +42,9 @@ def get_personajes():
     try:
         personajes = Personaje.query.filter_by(iduser=iduser).all()
 
-        resultado = []
+        data = []
         for p in personajes:
-            # Aseguramos que inventario siempre sea lista
-            inv = p.inventario if isinstance(p.inventario, list) else []
-
-            resultado.append({
+            data.append({
                 "idpersonaje": p.idpersonaje,
                 "cronica": p.cronica,
                 "juego": p.juego,
@@ -38,19 +56,19 @@ def get_personajes():
                 "etnia": p.etnia,
                 "descripcion": p.descripcion,
                 "historia": p.historia,
-                "inventario": inv,
+                "inventario": safe_inventario(p.inventario),
                 "notas": p.notas
             })
 
-        return jsonify(resultado), 200
+        return json_ok(data=data)
 
     except Exception as e:
-        return jsonify({"msg": "Error al obtener personajes", "error": str(e)}), 500
+        return json_error("Error al obtener personajes", e, 500)
 
 
-# =============================
+# ============================================================
 # POST /personajes
-# =============================
+# ============================================================
 @personajes_bp.route("/", methods=["POST"])
 @jwt_required()
 def create_personaje():
@@ -58,13 +76,9 @@ def create_personaje():
     data = request.get_json()
 
     if not data:
-        return jsonify({"msg": "Debe enviar JSON"}), 400
+        return json_error("Debe enviar JSON", code=400)
 
     try:
-        inventario = data.get("inventario", [])
-        if not isinstance(inventario, list):
-            inventario = []
-
         nuevo = Personaje(
             iduser=iduser,
             cronica=data.get("cronica"),
@@ -77,23 +91,23 @@ def create_personaje():
             etnia=data.get("etnia"),
             descripcion=data.get("descripcion"),
             historia=data.get("historia"),
-            inventario=inventario,
+            inventario=safe_inventario(data.get("inventario")),
             notas=data.get("notas")
         )
 
         db.session.add(nuevo)
         db.session.commit()
 
-        return jsonify({"msg": "Personaje creado", "idpersonaje": nuevo.idpersonaje}), 201
+        return json_ok("Personaje creado", {"idpersonaje": nuevo.idpersonaje}, 201)
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({"msg": "Error al crear personaje", "error": str(e)}), 500
+        return json_error("Error al crear personaje", e, 500)
 
 
-# =============================
+# ============================================================
 # PUT /personajes/<id>
-# =============================
+# ============================================================
 @personajes_bp.route("/<int:idpersonaje>", methods=["PUT"])
 @jwt_required()
 def update_personaje(idpersonaje):
@@ -101,72 +115,74 @@ def update_personaje(idpersonaje):
     data = request.get_json()
 
     if not data:
-        return jsonify({"msg": "Debe enviar JSON"}), 400
+        return json_error("Debe enviar JSON", code=400)
 
     try:
         personaje = Personaje.query.filter_by(idpersonaje=idpersonaje, iduser=iduser).first()
 
         if not personaje:
-            return jsonify({"msg": "Personaje no encontrado"}), 404
+            return json_error("Personaje no encontrado", code=404)
 
+        # Actualizar campos
         for campo in [
-            "cronica", "juego",
-            "nombre", "apellido", "genero", "edad", "ocupacion",
-            "etnia", "descripcion", "historia", "notas"
+            "cronica", "juego", "nombre", "apellido", "genero", "edad",
+            "ocupacion", "etnia", "descripcion", "historia", "notas"
         ]:
             if campo in data:
                 setattr(personaje, campo, data[campo])
 
-        # Asegurar que inventario sea lista
+        # Inventario
         if "inventario" in data:
-            personaje.inventario = data["inventario"] if isinstance(data["inventario"], list) else []
+            personaje.inventario = safe_inventario(data["inventario"])
 
         db.session.commit()
 
-        return jsonify({"msg": "Personaje actualizado"}), 200
+        return json_ok("Personaje actualizado")
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({"msg": "Error al actualizar personaje", "error": str(e)}), 500
-    
+        return json_error("Error al actualizar personaje", e, 500)
 
-# =============================
+
+# ============================================================
 # GET /personajes/<id>
-# =============================
+# ============================================================
 @personajes_bp.route("/<int:idpersonaje>", methods=["GET"])
 @jwt_required()
 def get_personaje(idpersonaje):
     iduser = int(get_jwt_identity())
 
     try:
-        personaje = Personaje.query.filter_by(idpersonaje=idpersonaje, iduser=iduser).first()
+        p = Personaje.query.filter_by(idpersonaje=idpersonaje, iduser=iduser).first()
 
-        if not personaje:
-            return jsonify({"msg": "Personaje no encontrado"}), 404
+        if not p:
+            return json_error("Personaje no encontrado", code=404)
 
-        return jsonify({
-            "idpersonaje": personaje.idpersonaje,
-            "cronica": personaje.cronica,
-            "juego": personaje.juego,
-            "nombre": personaje.nombre,
-            "apellido": personaje.apellido,
-            "genero": personaje.genero,
-            "edad": personaje.edad,
-            "ocupacion": personaje.ocupacion,
-            "etnia": personaje.etnia,
-            "descripcion": personaje.descripcion,
-            "historia": personaje.historia,
-            "inventario": personaje.inventario if isinstance(personaje.inventario, list) else [],
-            "notas": personaje.notas
-        }), 200
+        data = {
+            "idpersonaje": p.idpersonaje,
+            "cronica": p.cronica,
+            "juego": p.juego,
+            "nombre": p.nombre,
+            "apellido": p.apellido,
+            "genero": p.genero,
+            "edad": p.edad,
+            "ocupacion": p.ocupacion,
+            "etnia": p.etnia,
+            "descripcion": p.descripcion,
+            "historia": p.historia,
+            "inventario": safe_inventario(p.inventario),
+            "notas": p.notas
+        }
+
+        return json_ok(data=data)
 
     except Exception as e:
-        return jsonify({"msg": "Error al obtener personaje", "error": str(e)}), 500
+        return json_error("Error al obtener personaje", e, 500)
 
 
-# =============================
+# ============================================================
 # DELETE /personajes/<id>
-# =============================
+# ============================================================
 @personajes_bp.route("/<int:idpersonaje>", methods=["DELETE"])
 @jwt_required()
 def delete_personaje(idpersonaje):
@@ -176,20 +192,20 @@ def delete_personaje(idpersonaje):
         personaje = Personaje.query.filter_by(idpersonaje=idpersonaje, iduser=iduser).first()
 
         if not personaje:
-            return jsonify({"msg": "Personaje no encontrado"}), 404
+            return json_error("Personaje no encontrado", code=404)
 
         db.session.delete(personaje)
         db.session.commit()
 
-        return jsonify({"msg": "Personaje eliminado"}), 200
+        return json_ok("Personaje eliminado")
 
     except Exception as e:
-        return jsonify({"msg": "Error al eliminar personaje", "error": str(e)}), 500
+        return json_error("Error al eliminar personaje", e, 500)
 
 
-# =============================
+# ============================================================
 # PDF
-# =============================
+# ============================================================
 @personajes_bp.route("/<int:idpersonaje>/pdf", methods=["GET"])
 @jwt_required()
 def get_personaje_pdf(idpersonaje):
@@ -199,7 +215,7 @@ def get_personaje_pdf(idpersonaje):
         personaje = Personaje.query.filter_by(idpersonaje=idpersonaje, iduser=iduser).first()
 
         if not personaje:
-            return jsonify({"msg": "Personaje no encontrado"}), 404
+            return json_error("Personaje no encontrado", code=404)
 
         buffer = BytesIO()
         pdf = canvas.Canvas(buffer, pagesize=letter)
@@ -231,14 +247,8 @@ def get_personaje_pdf(idpersonaje):
             write(line, 15)
 
         write("Inventario:", 25)
-
-        inventario = personaje.inventario if isinstance(personaje.inventario, list) else []
-
-        if inventario:
-            for item in inventario:
-                write(f"- {item}", 15)
-        else:
-            write("N/A", 15)
+        for item in safe_inventario(personaje.inventario):
+            write(f"- {item}", 15)
 
         write("Notas:", 25)
         for line in (personaje.notas or "N/A").split("\n"):
@@ -255,5 +265,5 @@ def get_personaje_pdf(idpersonaje):
         )
 
     except Exception as e:
-        print("❌ Error generando PDF:", e)
-        return jsonify({"msg": "Error generando PDF", "error": str(e)}), 500
+        return json_error("Error generando PDF", e, 500)
+
