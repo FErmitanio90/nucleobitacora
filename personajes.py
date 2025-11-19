@@ -21,8 +21,12 @@ def get_personajes():
     try:
         personajes = Personaje.query.filter_by(iduser=iduser).all()
 
-        resultado = [
-            {
+        resultado = []
+        for p in personajes:
+            # Aseguramos que inventario siempre sea lista
+            inv = p.inventario if isinstance(p.inventario, list) else []
+
+            resultado.append({
                 "idpersonaje": p.idpersonaje,
                 "cronica": p.cronica,
                 "juego": p.juego,
@@ -34,11 +38,9 @@ def get_personajes():
                 "etnia": p.etnia,
                 "descripcion": p.descripcion,
                 "historia": p.historia,
-                "inventario": p.inventario,
+                "inventario": inv,
                 "notas": p.notas
-            }
-            for p in personajes
-        ]
+            })
 
         return jsonify(resultado), 200
 
@@ -59,6 +61,10 @@ def create_personaje():
         return jsonify({"msg": "Debe enviar JSON"}), 400
 
     try:
+        inventario = data.get("inventario", [])
+        if not isinstance(inventario, list):
+            inventario = []
+
         nuevo = Personaje(
             iduser=iduser,
             cronica=data.get("cronica"),
@@ -71,7 +77,7 @@ def create_personaje():
             etnia=data.get("etnia"),
             descripcion=data.get("descripcion"),
             historia=data.get("historia"),
-            inventario=data.get("inventario"),
+            inventario=inventario,
             notas=data.get("notas")
         )
 
@@ -106,10 +112,14 @@ def update_personaje(idpersonaje):
         for campo in [
             "cronica", "juego",
             "nombre", "apellido", "genero", "edad", "ocupacion",
-            "etnia", "descripcion", "historia", "inventario", "notas"
+            "etnia", "descripcion", "historia", "notas"
         ]:
             if campo in data:
                 setattr(personaje, campo, data[campo])
+
+        # Asegurar que inventario sea lista
+        if "inventario" in data:
+            personaje.inventario = data["inventario"] if isinstance(data["inventario"], list) else []
 
         db.session.commit()
 
@@ -119,6 +129,7 @@ def update_personaje(idpersonaje):
         db.session.rollback()
         return jsonify({"msg": "Error al actualizar personaje", "error": str(e)}), 500
     
+
 # =============================
 # GET /personajes/<id>
 # =============================
@@ -145,7 +156,7 @@ def get_personaje(idpersonaje):
             "etnia": personaje.etnia,
             "descripcion": personaje.descripcion,
             "historia": personaje.historia,
-            "inventario": personaje.inventario,
+            "inventario": personaje.inventario if isinstance(personaje.inventario, list) else [],
             "notas": personaje.notas
         }), 200
 
@@ -220,10 +231,8 @@ def get_personaje_pdf(idpersonaje):
             write(line, 15)
 
         write("Inventario:", 25)
-        try:
-            inventario = json.loads(personaje.inventario) if personaje.inventario else []
-        except:
-            inventario = [personaje.inventario]
+
+        inventario = personaje.inventario if isinstance(personaje.inventario, list) else []
 
         if inventario:
             for item in inventario:

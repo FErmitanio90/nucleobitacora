@@ -1,15 +1,12 @@
-#app.py backend
+# app.py backend
 from flask import Flask
 from flask_cors import CORS
 from extensions import db, jwt
 from dotenv import load_dotenv
 import os
 
-# 🔹 NUEVO: Importar Flask-Migrate
+# 🔹 Importar Flask-Migrate
 from flask_migrate import Migrate  
-
-
-migrate = Migrate(db)
 
 load_dotenv()
 
@@ -27,10 +24,10 @@ app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "supersecretkey")
 db.init_app(app)
 jwt.init_app(app)
 
-# 🔹 NUEVO: Inicializar Flask-Migrate
+# 🔹 Inicializar Flask-Migrate (CORRECTO)
 migrate = Migrate(app, db)
 
-# ✅ Importar modelos antes de crear tablas o migrar
+# Importar modelos ANTES de registrar blueprints
 from models import User, Dashboard, Personaje
 
 # Importar blueprints DESPUÉS de inicializar db y jwt
